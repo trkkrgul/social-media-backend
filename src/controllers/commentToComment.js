@@ -3,7 +3,7 @@ import mongoose from "mongoose";
 export const commentToComment = async (req, res) => {
   try {
     const { parentComment, content, postId } = req.body;
-
+    const { walletAddress } = req.user;
     const user = await User.findOne({ walletAddress: walletAddress });
     if (!user) {
       return res.status(404).json({ message: "User not found" });
