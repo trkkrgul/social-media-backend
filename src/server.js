@@ -24,6 +24,9 @@ app.use(cors()); // Enable CORS
 app.use(express.json()); // Parse JSON request bodies
 
 // Routes
+app.get("/", (req, res) => {
+  res.send("Hello World");
+});
 app.use("/api/post", postRoutes);
 app.use("/api/user", userRoutes);
 app.use("/api/like", likeRoutes);
