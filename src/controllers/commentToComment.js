@@ -1,8 +1,14 @@
-import { Comment, Post } from "../models/index.js";
+import { Comment, Post, User } from "../models/index.js";
 import mongoose from "mongoose";
 export const commentToComment = async (req, res) => {
   try {
-    const { parentComment, content, userId, postId } = req.body;
+    const { parentComment, content, postId } = req.body;
+
+    const user = await User.findOne({ walletAddress: walletAddress });
+    if (!user) {
+      return res.status(404).json({ message: "User not found" });
+    }
+    const userId = user._id;
     const comment = new Comment({
       post: postId,
       parentComment: parentComment,

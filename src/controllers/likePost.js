@@ -1,8 +1,16 @@
-import { Like, Post } from "../models/index.js";
+import { Like, Post, User } from "../models/index.js";
 import mongoose from "mongoose";
 export const likePost = async (req, res) => {
   try {
-    const { postId, userId } = req.body;
+    const { postId } = req.body;
+    const { walletAddress } = req.user;
+
+    const user = await User.findOne({ walletAddress: walletAddress });
+    if (!user) {
+      return res.status(404).json({ message: "User not found" });
+    }
+    const userId = user._id;
+
     const existingLike = await Like.findOne({
       targetId: postId,
       targetType: "post",
