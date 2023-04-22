@@ -10,12 +10,13 @@ const deletePost = async (req, res) => {
       return res.status(404).json({ message: "User not found" });
     }
 
-    const post = Post.findById(postId);
+    const _post = Post.findById(postId).select("user");
+    const post = _post.populate("user", "_id");
     if (!post) {
       return res.status(404).json({ message: "Post not found" });
     }
 
-    if (String(post.user) !== user._id) {
+    if (post.user._id !== user._id) {
       return res.status(401).json({ message: "Unauthorized" });
     }
 
