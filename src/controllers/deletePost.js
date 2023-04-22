@@ -3,7 +3,7 @@ import { Post, User } from "../models/index.js";
 const deletePost = async (req, res) => {
   try {
     const { walletAddress } = req.user;
-    const { postId } = req.params;
+    const { postId } = req.body;
 
     const user = await User.findOne({ walletAddress: walletAddress });
     if (!user) {
