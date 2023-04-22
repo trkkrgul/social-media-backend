@@ -1,37 +1,36 @@
-import { User } from "../models/index.js";
-async function followUsers(req, res) {
+import { User, Follow } from "../models/index.js";
+import mongoose from "mongoose";
+async function followUser(req, res) {
   try {
-    const { userWalletAddress, usersToFollow } = req.body;
-
-    const currentUser = await User.findOne({
-      walletAddress: userWalletAddress,
-    });
-    if (!currentUser) {
+    const { targetWallet } = req.params;
+    const { walletAddress } = req.user;
+    const user = await User.findOne({ walletAddress });
+    if (!user) {
       return res.status(404).json({ message: "User not found" });
     }
 
-    const usersToFollowIds = await User.find({
-      walletAddress: { $in: usersToFollow },
-    }).distinct("_id");
-    if (!usersToFollowIds || usersToFollowIds.length === 0) {
-      return res
-        .status(404)
-        .json({ message: "One or more users to follow not found" });
+    const targetUser = await User.findOne({ walletAddress: targetWallet });
+    if (!targetUser) {
+      return res.status(404).json({ message: "Target user not found" });
     }
 
-    const followedUsers = currentUser.followings.concat(usersToFollowIds);
-    currentUser.followings = followedUsers;
-    await currentUser.save();
+    const followerId = user._id;
+    const followingId = targetUser._id;
+    if (targetUser.followers.includes(followerId)) {
+      targetUser.followers.pull(followerId);
+      user.followings.pull(followingId);
+      await targetUser.save();
+      await user.save();
+      return res.status(200).json({ user, targetUser });
+    }
 
-    const updatedUser = await User.findById(currentUser._id).populate(
-      "followings"
-    );
-
-    res.json(updatedUser);
+    targetUser.followers.push(followerId);
+    user.followings.push(followingId);
+    await targetUser.save();
+    await user.save();
+    res.status(200).json({ user, targetUser });
   } catch (error) {
-    console.error(error);
-    res.status(500).json({ message: "Internal server error" });
+    res.status(500).json({ message: error.message });
   }
 }
-
-export default followUsers;
+export default followUser;

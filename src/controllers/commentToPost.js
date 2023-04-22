@@ -168,31 +168,31 @@ export const commentToPost = async (req, res) => {
       {
         path: "user",
         select:
-          "username profilePicturePath coverPicturePath isVerified isKYCED walletAddress",
+          "_id username profilePicturePath coverPicturePath isVerified isKYCED walletAddress followers followings",
       },
       {
         path: "comments.childComments.user",
         select:
-          "username profilePicturePath coverPicturePath isVerified isKYCED walletAddress",
+          "_id username profilePicturePath coverPicturePath isVerified isKYCED walletAddress followers followings",
       },
       {
         path: "comments.user",
         select:
-          "username profilePicturePath coverPicturePath isVerified isKYCED walletAddress",
+          "_id username profilePicturePath coverPicturePath isVerified isKYCED walletAddress followers followings",
       },
       {
         path: "likers.user",
         select:
-          "username profilePicturePath coverPicturePath isVerified isKYCED walletAddress",
+          "_id username profilePicturePath coverPicturePath isVerified isKYCED walletAddress followers followings",
       },
       {
         path: "dislikers.user",
         select:
-          "username profilePicturePath coverPicturePath isVerified isKYCED walletAddress",
+          "_id username profilePicturePath coverPicturePath isVerified isKYCED walletAddress followers followings",
       },
     ]);
 
-    res.status(200).json(posts);
+    res.status(200).json(posts[0]);
   } catch (error) {
     console.error(error);
     res.status(404).json({ message: "Post not found" });

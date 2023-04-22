@@ -19,3 +19,4 @@ export { default as getPostsByUserName } from "./getPostsByUserName.js";
 export { default as updateProfile } from "./updateProfile.js";
 export { default as getAuthUser } from "./getAuthUser.js";
 export { default as checkUsername } from "./checkUsername.js";
+export { default as getUserByWalletAddress } from "./getUserByWalletAddress.js";
