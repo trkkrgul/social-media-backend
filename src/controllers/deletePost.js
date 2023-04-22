@@ -11,12 +11,16 @@ const deletePost = async (req, res) => {
     }
 
     const _post = Post.findById(postId).select("user");
-    const post = _post.populate("user", "_id");
-    if (!post) {
+    const postOwner = User.findOne({ _id: _post.user }).select("_id");
+    if (!postOwner) {
+      return res.status(404).json({ message: "Post owner not found" });
+    }
+
+    if (!_post) {
       return res.status(404).json({ message: "Post not found" });
     }
 
-    if (post.user._id !== user._id) {
+    if (postOwner._id !== user._id) {
       return res.status(401).json({ message: "Unauthorized" });
     }
 
