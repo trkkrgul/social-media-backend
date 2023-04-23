@@ -9,21 +9,9 @@ const deletePost = async (req, res) => {
     if (!user) {
       return res.status(404).json({ message: "User not found" });
     }
-    const post = Post.findById(postId);
-    if (!post) {
-      return res.status(404).json({ message: "Post not found" });
-    }
-    const postOwner = await User.findById(post.user);
-    console.log("postOwner", postOwner);
-    if (postOwner.walletAddress !== walletAddress) {
-      return res.status(401).json({ message: "Unauthorized" });
-    }
-    const deletedPost = Post.deleteOne({ _id: postId });
-    if (!deletedPost) {
-      return res.status(404).json({ message: "Post not found" });
-    }
 
-    res.status(200).json({ message: "Post deleted" });
+    const post = Post.findById(postId);
+    console.log(post.user);
   } catch (error) {
     res.status(500).json({ message: error.message });
   }
