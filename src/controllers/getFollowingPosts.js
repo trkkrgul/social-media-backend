@@ -19,15 +19,13 @@ const getFollowingPosts = async (req, res) => {
         },
       },
 
-      { $match: { "user._id": { $in: followings } } },
-
       { $sort: { createdAt: -1 } },
       {
         $addFields: {
           user: { $arrayElemAt: ["$user", 0] },
         },
       },
-
+      { $match: { "user._id": { $in: followings } } },
       {
         $lookup: {
           from: "comments",
