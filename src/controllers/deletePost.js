@@ -14,6 +14,7 @@ const deletePost = async (req, res) => {
       return res.status(404).json({ message: "Post not found" });
     }
     const postOwner = await User.findById(post.user);
+    console.log("postOwner", postOwner);
     if (postOwner.walletAddress !== walletAddress) {
       return res.status(401).json({ message: "Unauthorized" });
     }
