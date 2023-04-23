@@ -1,3 +1,4 @@
+import mongoose from "mongoose";
 import { Post, User, Comment, Like } from "../models/index.js";
 const getFollowingPosts = async (req, res) => {
   try {
