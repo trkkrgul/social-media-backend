@@ -29,7 +29,7 @@ const getFollowingPosts = async (req, res) => {
       {
         $match: {
           "user._id": {
-            $in: followings.map((id) => mongoose.Types.ObjectId(id)),
+            $in: followings.map((id) => new mongoose.Types.ObjectId(id)),
           },
         },
       },
