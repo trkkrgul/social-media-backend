@@ -14,7 +14,7 @@ const router = express.Router();
 
 router.post("/create", authMiddleware, createPost);
 router.get("/feed", getPosts);
-router.get("/followingPosts", authMiddleware, getFollowingPosts);
+router.post("/followingPosts", authMiddleware, getFollowingPosts);
 router.get("/id/:postId", getPostById);
 router.get("/wallet/:wallet", getPostsByWalletAddress);
 router.get("/username/:username", getPostsByUserName);
