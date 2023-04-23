@@ -25,7 +25,13 @@ const getFollowingPosts = async (req, res) => {
           user: { $arrayElemAt: ["$user", 0] },
         },
       },
-      { $match: { "user._id": { $in: followings } } },
+      {
+        $match: {
+          "user._id": {
+            $in: followings.map((id) => mongoose.Types.ObjectId(id)),
+          },
+        },
+      },
       {
         $lookup: {
           from: "comments",
