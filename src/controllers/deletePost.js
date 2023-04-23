@@ -11,9 +11,9 @@ const deletePost = async (req, res) => {
     }
 
     const post = Post.findById(postId);
-    console.log(post);
-    post.populate("user");
-    console.log("owner", post.user.walletAddress);
+
+    const result = post.populate("user");
+    console.log("owner", result.user.walletAddress);
     res.status(200).json({ message: "Post deleted" });
   } catch (error) {
     res.status(500).json({ message: error.message });
