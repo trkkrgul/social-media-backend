@@ -1,6 +1,5 @@
-import { Post } from "../models/index.js";
-
-async function deletePost(req, res) {
+import { User, Post } from "../models/index.js";
+async function removePost(req, res) {
   try {
     // Retrieve the user's wallet address from the middleware
     const userWalletAddress = req.user.walletAddress;
@@ -8,10 +7,20 @@ async function deletePost(req, res) {
     // Retrieve the post ID from the request parameters
     const { postId } = req.body;
 
-    // Find the post by its ID and the user's wallet address
+    // Find the user by wallet address
+    const user = await User.findOne({ walletAddress: userWalletAddress });
+
+    // If the user is not found, return a 404 error
+    if (!user) {
+      return res.status(404).json({
+        message: "User not found",
+      });
+    }
+
+    // Find the post by its ID and the user's ObjectId
     const post = await Post.findOne({
       _id: postId,
-      user: userWalletAddress,
+      user: user._id,
     });
 
     // If the post is not found, return a 404 error
@@ -37,4 +46,4 @@ async function deletePost(req, res) {
   }
 }
 
-export default deletePost;
+export default removePost;
