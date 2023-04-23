@@ -12,6 +12,7 @@ const deletePost = async (req, res) => {
 
     const post = Post.findById(postId);
     console.log(post.user);
+    res.status(200).json({ message: "Post deleted" });
   } catch (error) {
     res.status(500).json({ message: error.message });
   }
