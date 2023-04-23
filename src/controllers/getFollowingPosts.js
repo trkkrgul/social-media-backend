@@ -8,6 +8,7 @@ const getFollowingPosts = async (req, res) => {
     if (!user) {
       return res.status(404).json({ message: "User not found" });
     }
+    console.log(followings);
     const result = await Post.aggregate([
       {
         $lookup: {
@@ -18,7 +19,7 @@ const getFollowingPosts = async (req, res) => {
         },
       },
 
-      { $match: { "user.walletAddress": { $in: followings } } },
+      { $match: { "user._id": { $in: followings } } },
 
       { $sort: { createdAt: -1 } },
       {
