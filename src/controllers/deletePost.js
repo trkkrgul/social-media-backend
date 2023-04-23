@@ -1,4 +1,4 @@
-import Post from "./models/Post"; // Make sure the path is correct
+import { Post } from "../models/index.js";
 
 async function deletePost(req, res) {
   try {
