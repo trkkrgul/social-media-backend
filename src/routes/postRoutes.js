@@ -25,14 +25,16 @@ const uploadMw = multer({
     ) {
       cb(null, true);
     } else {
-      cb(null, false);
-      return cb(new Error("Only .png, .jpg, .jpeg, .gif format allowed!"));
+      cb(new multer.MulterError('LIMIT_UNEXPECTED_FILE'));
     }
   },
   limits: {
-    fileSize: 5 * 1024 * 1024 // 5MB
+    fileSize: 5 * 1024 * 1024, // 5MB
+    files: 10,
   }
-}).array("images", 10, {});
+}).array("images", 10);
+
+//"Only .png, .jpg, .jpeg, .gif format allowed!"
 
 router.post("/create", uploadMw, authMiddleware, createPost);
 router.get("/feed", getPosts); 
