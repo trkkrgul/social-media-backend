@@ -1,8 +1,9 @@
 import mongoose from "mongoose";
 
 const mediaSchema = new mongoose.Schema({
-  url: { type: String, required: true },
+  url: { type: String, required: false },
   type: { type: String, required: true, enum: ["image", "video", "audio"] },
+  key: { type: String, required: false}
 });
 
 const tokenSchema = new mongoose.Schema({
