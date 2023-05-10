@@ -1,7 +1,8 @@
-import { PutObjectCommand, S3Client } from "@aws-sdk/client-s3";
+import { GetObjectCommand, PutObjectCommand, S3Client } from "@aws-sdk/client-s3";
 import dotenv from "dotenv";
 import { v4 as uuid } from "uuid";
 import { Post, User } from "../models/index.js";
+import { getSignedUrl } from "@aws-sdk/s3-request-presigner";
 
 
 dotenv.config();
@@ -17,6 +18,18 @@ const credentials = {
 export const s3Client = new S3Client(credentials);
 
 const BUCKET = process.env.AWS_S3_BUCKET_NAME;
+
+async function addPresignedUrls (images){
+  await Promise.all(
+    images?.map( async (image) => {
+      if(image.key){
+        const command = new GetObjectCommand({ Bucket: BUCKET, Key: image.key });
+        image.url = await getSignedUrl(s3Client, command, {expiresIn: 3600})
+        return image;
+      }
+    })
+  )
+}
 
 async function uploadToS3 (file) {
   const key = `${process.env.AWS_IMAGE_PATH}/${uuid()}-${file.originalname.replaceAll(' ', '-')}`
@@ -270,9 +283,10 @@ async function createPost(req, res) {
           "_id username profilePicturePath coverPicturePath isVerified isKYCED walletAddress followers followings",
       },
     ]);
-
-    res.status(200).json(posts);
-  } catch (error) {
+    
+    await addPresignedUrls(result[0].media);
+    res.status(200).json(result);
+  } catch (error) { 
     console.error(error);
     res.status(404).json({ message: "Post not found" });
   }
