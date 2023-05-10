@@ -11,6 +11,7 @@ import {
   authRoutes,
 } from "./routes/index.js";
 import connectDB from "./services/mongoDB.js";
+import multer from "multer";
 // Initialize dotenv to load environment variables
 dotenv.config();
 
@@ -33,9 +34,30 @@ app.use("/api/like", likeRoutes);
 app.use("/api/comment", commentRoutes);
 app.use("/api/auth", authRoutes);
 
+
+
 // Error handling
 app.use((err, req, res, next) => {
-  console.error(err.stack);
+  console.error(err.stack, err.code);
+  if(err instanceof multer.MulterError){
+    if(err.code === 'LIMIT_FILE_SIZE'){
+      return res.status(400).json({
+        message: 'File is too large!'
+      })
+    }
+    if(err.code === 'LIMIT_FILE_COUNT'){
+      return res.status(400).json({
+        message: 'File limit reached!'
+      })
+    }
+    if(err.code === "LIMIT_UNEXPECTED_FILE"){
+      next(err);
+      return res.status(400).json({
+        message: 'Only .png, .jpg, .jpeg, .gif format allowed!'
+      })
+    }
+  }
+
   res.status(500).send("Internal server error");
 });
 

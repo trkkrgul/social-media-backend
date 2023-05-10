@@ -1,5 +1,43 @@
 import mongoose from "mongoose";
 import { Post, User, Comment } from "../models/index.js";
+import { s3Client } from "./createPost.js";
+import { getSignedUrl } from "@aws-sdk/s3-request-presigner";
+import { GetObjectCommand } from "@aws-sdk/client-s3";
+
+const BUCKET = process.env.AWS_S3_BUCKET_NAME;
+
+async function addPresignedUrls (images){
+  await Promise.all(
+    images?.map( async (image) => {
+      if(image.key){
+        const command = new GetObjectCommand({ Bucket: BUCKET, Key: image.key });
+        image.url = await getSignedUrl(s3Client, command, {expiresIn: 3600})
+        return image;
+      }
+    })
+  )
+}
+
+async function getBucketFiles (res) {  
+  const command = new ListObjectsV2Command({
+    Bucket: BUCKET,
+    Prefix: 'images/',
+    Delimiter: '/'
+  });
+
+  try {
+    const response = await s3Client.send(command);
+    const urls = await getPresignedUrls(response.Contents);
+    res.send(urls);
+  } catch (err) {
+    console.log("Error", err);
+    res.send(err)
+  }
+}
+
+async function handlePostsWithUrl (posts) {
+  await Promise.all(posts.map( async (post) => { await addPresignedUrls(post.media)}));
+}
 
 export const getPosts = async (req, res) => {
   try {
@@ -192,6 +230,7 @@ export const getPosts = async (req, res) => {
       },
     ]);
 
+    await handlePostsWithUrl(posts);
     res.status(200).json(posts);
   } catch (error) {
     console.error(error);
