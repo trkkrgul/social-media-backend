@@ -1,9 +1,7 @@
-import { GetObjectCommand, ListObjectsCommand, ListObjectsV2Command, PutObjectCommand, S3Client } from "@aws-sdk/client-s3";
-import { Post, User } from "../models/index.js";
+import { PutObjectCommand, S3Client } from "@aws-sdk/client-s3";
 import dotenv from "dotenv";
-import axios from "axios";
-import { getSignedUrl } from "@aws-sdk/s3-request-presigner"
 import { v4 as uuid } from "uuid";
+import { Post, User } from "../models/index.js";
 
 
 dotenv.config();
@@ -16,20 +14,9 @@ const credentials = {
   }
 };
 
-const s3Client = new S3Client(credentials);
+export const s3Client = new S3Client(credentials);
+
 const BUCKET = process.env.AWS_S3_BUCKET_NAME;
-
-async function getPresignedUrls (images){
-
-  const presignedUrls = Promise.all(
-    images.map((image) => {
-      const command = new GetObjectCommand({ Bucket: BUCKET, Key: image.Key });
-      return getSignedUrl(s3Client, command, {expiresIn: 3600});
-    })
-  )
-
-  return presignedUrls;
-}
 
 async function uploadToS3 (file) {
   const key = `${process.env.AWS_IMAGE_PATH}/${uuid()}-${file.originalname.replaceAll(' ', '-')}`
@@ -53,32 +40,7 @@ async function uploadToS3 (file) {
 }
 
 
-async function getBucketFiles (res) {  
 
-  const command = new ListObjectsV2Command({
-    Bucket: BUCKET,
-    Prefix: 'images/',
-    Delimiter: '/'
-  });
-
-  try {
-    const response = await s3Client.send(command);
-    const urls = await getPresignedUrls(response.Contents);
-    res.send(urls);
-  } catch (err) {
-    console.log("Error", err);
-    res.send(err)
-  }
-
-  // try {
-  //   const data = await s3Client.send(new GetObjectCommand(bucketParams));
-  //   console.log(data)
-  //   res.send(data)
-  // } catch (err) {
-  //   console.log("Error", err);
-  //   res.send(err)
-  // }
-}
 
 async function handleUpload(files) {
   const images = Promise.all(
