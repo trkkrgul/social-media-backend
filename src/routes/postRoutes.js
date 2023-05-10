@@ -9,11 +9,15 @@ import {
   getFollowingPosts,
 } from "../controllers/index.js";
 import authMiddleware from "../middleware/authValidator.js";
+import multer, { memoryStorage } from "multer";
 
 const router = express.Router();
 
-router.post("/create", authMiddleware, createPost);
-router.get("/feed", getPosts);
+const storage = memoryStorage();
+const uploadMw = multer({storage}).array('images', 10);
+
+router.post("/create", uploadMw, authMiddleware, createPost);
+router.get("/feed", getPosts); 
 router.post("/followingPosts", authMiddleware, getFollowingPosts);
 router.get("/id/:postId", getPostById);
 router.get("/wallet/:wallet", getPostsByWalletAddress);

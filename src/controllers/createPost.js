@@ -1,13 +1,115 @@
+import { GetObjectCommand, ListObjectsCommand, ListObjectsV2Command, PutObjectCommand, S3Client } from "@aws-sdk/client-s3";
 import { Post, User } from "../models/index.js";
-async function addPost(req, res) {
+import dotenv from "dotenv";
+import axios from "axios";
+import { getSignedUrl } from "@aws-sdk/s3-request-presigner"
+import { v4 as uuid } from "uuid";
+
+
+dotenv.config();
+
+const credentials = {
+  region: process.env.AWS_REGION,
+  credentials: {
+    accessKeyId: process.env.AWS_ACCESS_KEY,
+    secretAccessKey: process.env.AWS_SECRET_ACCESS
+  }
+};
+
+const s3Client = new S3Client(credentials);
+const BUCKET = process.env.AWS_S3_BUCKET_NAME;
+
+async function getPresignedUrls (images){
+
+  const presignedUrls = Promise.all(
+    images.map((image) => {
+      const command = new GetObjectCommand({ Bucket: BUCKET, Key: image.Key });
+      return getSignedUrl(s3Client, command, {expiresIn: 3600});
+    })
+  )
+
+  return presignedUrls;
+}
+
+async function uploadToS3 (file) {
+  const key = `${process.env.AWS_IMAGE_PATH}/${uuid()}-${file.originalname.replaceAll(' ', '-')}`
+  const bucketParams = {
+    Bucket: BUCKET,
+    Key: key,
+    Body: file.buffer,
+    ContentType: file.mimetype
+  };
+
   try {
-    const { content, media, tags, token, categories, userWalletAddress } =
+    const data = await s3Client.send(new PutObjectCommand(bucketParams));
+    if(data.$metadata.httpStatusCode == 200){
+      return key;
+    } else {
+      console.log("Error while uploading to S3.");
+    }
+  } catch (err) {
+    console.log("Error", err);
+  }
+}
+
+
+async function getBucketFiles (res) {  
+
+  const command = new ListObjectsV2Command({
+    Bucket: BUCKET,
+    Prefix: 'images/',
+    Delimiter: '/'
+  });
+
+  try {
+    const response = await s3Client.send(command);
+    const urls = await getPresignedUrls(response.Contents);
+    res.send(urls);
+  } catch (err) {
+    console.log("Error", err);
+    res.send(err)
+  }
+
+  // try {
+  //   const data = await s3Client.send(new GetObjectCommand(bucketParams));
+  //   console.log(data)
+  //   res.send(data)
+  // } catch (err) {
+  //   console.log("Error", err);
+  //   res.send(err)
+  // }
+}
+
+async function handleUpload(files) {
+  const images = Promise.all(
+    files.map(async (file) => {
+      const key = await uploadToS3(file);
+      return { key, type: file.mimetype.split("/")?.[0] };
+    })
+  );
+  return images;
+}
+
+// file.mimetype.split('/')?.[0]
+
+async function createPost(req, res) {
+  const { files } = req;
+
+  // handle if there is no files
+  if(!files) return res.status(400).json({message: 'Bad Request'})
+
+  const images = await handleUpload(files);
+
+  try {
+    const { content, tags, token, categories, userWalletAddress } =
       req.body;
     const loggedUser = req.user;
+
     if (loggedUser.walletAddress !== userWalletAddress) {
       console.log(loggedUser);
       return res.status(403).json({ message: "Unauthorized" });
     }
+
     const user = await User.findOne({ walletAddress: userWalletAddress });
     if (!user) {
       return res.status(404).json({ message: "User not found" });
@@ -15,7 +117,7 @@ async function addPost(req, res) {
 
     const newPost = new Post({
       content,
-      media,
+      media: images,
       token,
       tags,
       categories,
@@ -214,4 +316,4 @@ async function addPost(req, res) {
   }
 }
 
-export default addPost;
+export default createPost;
