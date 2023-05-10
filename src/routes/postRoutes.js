@@ -12,6 +12,8 @@ import authMiddleware from "../middleware/authValidator.js";
 import multer, { memoryStorage } from "multer";
 
 const router = express.Router();
+const FILESIZE = 5 * 1024 * 1024; // 5MB
+const FILE_LIMIT = 4;
 
 const storage = memoryStorage();
 const uploadMw = multer({
@@ -29,10 +31,10 @@ const uploadMw = multer({
     }
   },
   limits: {
-    fileSize: 5 * 1024 * 1024, // 5MB
-    files: 10,
+    fileSize: FILESIZE,
+    files: FILE_LIMIT,
   }
-}).array("images", 10);
+}).array("images", FILE_LIMIT);
 
 //"Only .png, .jpg, .jpeg, .gif format allowed!"
 
