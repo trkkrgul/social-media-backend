@@ -24,22 +24,6 @@ export const commentToComment = async (req, res) => {
       { $match: { _id: new mongoose.Types.ObjectId(postId) } },
       {
         $lookup: {
-          from: "users",
-          localField: "user",
-          foreignField: "_id",
-          as: "user",
-        },
-      },
-
-      { $sort: { createdAt: -1 } },
-      {
-        $addFields: {
-          user: { $arrayElemAt: ["$user", 0] },
-        },
-      },
-
-      {
-        $lookup: {
           from: "comments",
           let: { post_id: "$_id" },
           pipeline: [
@@ -104,73 +88,6 @@ export const commentToComment = async (req, res) => {
           as: "comments",
         },
       },
-      {
-        $lookup: {
-          from: "likes",
-          let: { post_id: "$_id" },
-          pipeline: [
-            {
-              $match: {
-                $expr: {
-                  $and: [
-                    { $eq: ["$targetType", "post"] },
-                    { $eq: ["$targetId", "$$post_id"] },
-                    { $eq: ["$isDislike", false] },
-                  ],
-                },
-              },
-            },
-            {
-              $lookup: {
-                from: "users",
-                localField: "user",
-                foreignField: "_id",
-                as: "user",
-              },
-            },
-            {
-              $addFields: {
-                user: { $arrayElemAt: ["$user", 0] },
-              },
-            },
-          ],
-          as: "likers",
-        },
-      },
-      {
-        $lookup: {
-          from: "likes",
-          let: { post_id: "$_id" },
-          pipeline: [
-            {
-              $match: {
-                $expr: {
-                  $and: [
-                    { $eq: ["$targetType", "post"] },
-                    { $eq: ["$targetId", "$$post_id"] },
-                    { $eq: ["$isDislike", true] },
-                  ],
-                },
-              },
-            },
-            {
-              $lookup: {
-                from: "users",
-                localField: "user",
-                foreignField: "_id",
-                as: "user",
-              },
-            },
-            {
-              $addFields: {
-                user: { $arrayElemAt: ["$user", 0] },
-              },
-            },
-          ],
-          as: "dislikers",
-        },
-      },
-      // ... rest of the pipeline
     ]);
 
     const posts = await Post.populate(result, [
@@ -186,16 +103,6 @@ export const commentToComment = async (req, res) => {
       },
       {
         path: "comments.user",
-        select:
-          "_id username profilePicturePath coverPicturePath isVerified isKYCED walletAddress followers followings",
-      },
-      {
-        path: "likers.user",
-        select:
-          "_id username profilePicturePath coverPicturePath isVerified isKYCED walletAddress followers followings",
-      },
-      {
-        path: "dislikers.user",
         select:
           "_id username profilePicturePath coverPicturePath isVerified isKYCED walletAddress followers followings",
       },

@@ -1,5 +1,5 @@
-import { Like, Post, User } from "../models/index.js";
 import mongoose from "mongoose";
+import { Like, Post, User } from "../models/index.js";
 export const likePost = async (req, res) => {
   try {
     const { postId } = req.body;
@@ -36,88 +36,6 @@ export const likePost = async (req, res) => {
     }
     const result = await Post.aggregate([
       { $match: { _id: new mongoose.Types.ObjectId(postId) } },
-      {
-        $lookup: {
-          from: "users",
-          localField: "user",
-          foreignField: "_id",
-          as: "user",
-        },
-      },
-
-      { $sort: { createdAt: -1 } },
-      {
-        $addFields: {
-          user: { $arrayElemAt: ["$user", 0] },
-        },
-      },
-
-      {
-        $lookup: {
-          from: "comments",
-          let: { post_id: "$_id" },
-          pipeline: [
-            {
-              $match: {
-                $expr: {
-                  $and: [{ $eq: ["$post", "$$post_id"] }],
-                },
-              },
-            },
-            {
-              $match: {
-                $or: [
-                  { parentComment: { $exists: false } },
-                  { parentComment: null },
-                ],
-              },
-            },
-            {
-              $lookup: {
-                from: "users",
-                localField: "user",
-                foreignField: "_id",
-                as: "user",
-              },
-            },
-            {
-              $addFields: {
-                user: { $arrayElemAt: ["$user", 0] },
-              },
-            },
-            {
-              $lookup: {
-                from: "comments",
-                let: { parent_id: "$_id" },
-                pipeline: [
-                  {
-                    $match: {
-                      $expr: {
-                        $and: [{ $eq: ["$parentComment", "$$parent_id"] }],
-                      },
-                    },
-                  },
-                  {
-                    $lookup: {
-                      from: "users",
-                      localField: "user",
-                      foreignField: "_id",
-                      as: "user",
-                    },
-                  },
-                  {
-                    $addFields: {
-                      user: { $arrayElemAt: ["$user", 0] },
-                    },
-                  },
-                ],
-                as: "replies",
-              },
-            },
-          ],
-          as: "comments",
-        },
-      },
       {
         $lookup: {
           from: "likes",
@@ -194,16 +112,6 @@ export const likePost = async (req, res) => {
           "_id username profilePicturePath coverPicturePath isVerified isKYCED walletAddress followers followings",
       },
       {
-        path: "comments.childComments.user",
-        select:
-          "_id username profilePicturePath coverPicturePath isVerified isKYCED walletAddress followers followings",
-      },
-      {
-        path: "comments.user",
-        select:
-          "_id username profilePicturePath coverPicturePath isVerified isKYCED walletAddress followers followings",
-      },
-      {
         path: "likers.user",
         select:
           "_id username profilePicturePath coverPicturePath isVerified isKYCED walletAddress followers followings",
@@ -214,7 +122,7 @@ export const likePost = async (req, res) => {
           "_id username profilePicturePath coverPicturePath isVerified isKYCED walletAddress followers followings",
       },
     ]);
-
+    
     res.status(200).json(posts[0]);
   } catch (error) {
     console.error(error);
