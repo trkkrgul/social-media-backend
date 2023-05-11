@@ -283,9 +283,10 @@ async function createPost(req, res) {
           "_id username profilePicturePath coverPicturePath isVerified isKYCED walletAddress followers followings",
       },
     ]);
+
+    await addPresignedUrls(posts[0].media);
+    res.status(200).json(posts);
     
-    await addPresignedUrls(result[0].media);
-    res.status(200).json(result);
   } catch (error) { 
     console.error(error);
     res.status(404).json({ message: "Post not found" });
