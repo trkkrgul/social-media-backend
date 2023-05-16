@@ -55,13 +55,13 @@ async function uploadToS3 (file) {
 
 
 
-async function handleUpload(files) {
+async function handleUpload(files,res) {
   const images = Promise.all(
     files.map(async (file) => {
       const key = await uploadToS3(file);
       return { key, type: file.mimetype.split("/")?.[0] };
     })
-  );
+  ).catch(err => res.status(400).json({ message: "Error while image uploading" }));
   return images;
 }
 
@@ -73,7 +73,7 @@ async function createPost(req, res) {
   // handle if there is no files
   if(!files) return res.status(400).json({message: 'Bad Request'})
 
-  const images = await handleUpload(files);
+  const images = await handleUpload(files,res);
 
   try {
     const { content, tags, token, categories, userWalletAddress } =
