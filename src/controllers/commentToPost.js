@@ -19,7 +19,6 @@ export const commentToPost = async (req, res) => {
       return res.status(404).json({ message: "Post not found" });
     }
 
-    console.log(comment);
     const result = await Post.aggregate([
   { $match: { _id: new mongoose.Types.ObjectId(postId) } },
   {

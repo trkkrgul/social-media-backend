@@ -1,4 +1,39 @@
+import { GetObjectCommand, S3Client } from "@aws-sdk/client-s3";
 import { Post, User, Comment, Like } from "../models/index.js";
+import dotenv from "dotenv";
+import { getSignedUrl } from "@aws-sdk/s3-request-presigner";
+
+dotenv.config();
+
+const credentials = {
+  region: process.env.AWS_REGION,
+  credentials: {
+    accessKeyId: process.env.AWS_ACCESS_KEY,
+    secretAccessKey: process.env.AWS_SECRET_ACCESS
+  }
+};
+
+export const s3Client = new S3Client(credentials);
+
+const BUCKET = process.env.AWS_S3_BUCKET_NAME;
+
+async function addPresignedUrls (images){
+  await Promise.all(
+    images?.map( async (image) => {
+      if(image.key){
+        const command = new GetObjectCommand({ Bucket: BUCKET, Key: image.key });
+        image.url = await getSignedUrl(s3Client, command, {expiresIn: 3600})
+        return image;
+      }
+    })
+  )
+}
+
+async function handlePostsWithUrl (posts) {
+  await Promise.all(posts.map( async (post) => { await addPresignedUrls(post.media)}));
+}
+
+
 const getPostsByWalletAddress = async (req, res) => {
   try {
     const { wallet } = req.params;
@@ -186,6 +221,7 @@ const getPostsByWalletAddress = async (req, res) => {
       },
     ]);
 
+    await handlePostsWithUrl(posts);
     res.status(200).json(posts);
   } catch (error) {
     console.error(error);
