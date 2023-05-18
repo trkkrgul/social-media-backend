@@ -1,4 +1,4 @@
-import { PutObjectCommand, S3Client } from "@aws-sdk/client-s3";
+import { GetObjectCommand, PutObjectCommand, S3Client } from "@aws-sdk/client-s3";
 import dotenv from "dotenv";
 import { v4 as uuid } from "uuid";
 import { User } from "../models/index.js";
@@ -16,7 +16,7 @@ const credentials = {
 
 export const s3Client = new S3Client(credentials);
 
-const BUCKET = process.env.AWS_S3_BUCKET_NAME;
+const BUCKET = process.env.AWS_S3_PUBLIC_BUCKET_NAME;
 
 async function uploadToS3 (file) {
   const key = `${process.env.AWS_PROFILE_PATH}/${uuid()}-${file.originalname.replaceAll(' ', '-')}`
@@ -39,11 +39,28 @@ async function uploadToS3 (file) {
   }
 }
 
+async function getFromS3 (key) {
+  const bucketParams = {
+    Bucket: BUCKET,
+    Key: key,
+  };
+
+  try {
+    const response = await s3Client.send(new GetObjectCommand(bucketParams));
+    const url = `https://${BUCKET}.s3.amazonaws.com/${key}`;
+    console.log(url);
+    return url;
+  } catch (err) {
+    console.log("Error", err);
+  }
+}
+
 async function handleUpload(files,res) {
   const images = Promise.all(
     files.map(async (file) => {
       const key = await uploadToS3(file);
-      return { key, type: file.mimetype.split("/")?.[0] };
+      const url = await getFromS3(key);
+      return { key, type: file.mimetype.split("/")?.[0], url };
     })
   ).catch(err => res.status(400).json({ message: "Error while image uploading", err: err.message }));
   return images;
@@ -52,12 +69,10 @@ async function handleUpload(files,res) {
 async function updateProfile(req, res) {
   try {
     const {
-      profilePicturePath,
       biography,
       gender,
       telegramId,
       twitterId,
-      coverPicturePath,
       discordId,
       username,
       controller
@@ -81,22 +96,18 @@ async function updateProfile(req, res) {
     if (twitterId) user.twitterId = twitterId;
     if (discordId) user.discordId = discordId;
     if (username) user.username = username;
-    
+
     const images = await handleUpload(req.files, res); // 0-cover 1-profile
-    console.log(images, images.length);
-    console.log('1,deger',images?.[0]?.key, '2.deger', cover)
+    
     if(images?.length === 1) {
-      console.log('1blok');
-     
-      if(images?.[0]?.key && cover) user.coverPicturePath = images[0].key;
-      if(images?.[0]?.key && profile) user.profilePicturePath = images[0].key;
+      if(images?.[0]?.url && cover) user.coverPicturePath = images[0].url;
+      if(images?.[0]?.url && profile) user.profilePicturePath = images[0].url;
     } else if (images?.length === 2) {
-      console.log('blok2');
-      if(images?.[0]?.key) user.coverPicturePath = images[0].key;
-      if(images?.[1]?.key) user.profilePicturePath = images[1].key;
+      if(images?.[0]?.url) user.coverPicturePath = images[0].url;
+      if(images?.[1]?.url) user.profilePicturePath = images[1].url;
     }
+    
     const updatedUser = await user.save();
-   
     res.json(updatedUser);
   } catch (error) {
     console.error(error);

@@ -36,7 +36,7 @@ const uploadMw = multer({
 }).array("images", FILE_LIMIT);
 
 router.post("/signup", signup);
-router.post("/createProfile", authMiddleware, createProfile);
+router.post("/createProfile", uploadMw, authMiddleware, createProfile);
 router.post("/updateProfile", uploadMw, authMiddleware, updateProfile);
 router.get("/wallet/:wallet", getUserByWalletAddress);
 router.post("/follow/:targetWallet", authMiddleware, followUser);
