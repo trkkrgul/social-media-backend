@@ -1,5 +1,6 @@
 import mongoose from "mongoose";
 import { Comment, Post, User } from "../models/index.js";
+import postLikesComments from "../aggregates/postLikesComments.js";
 
 export const commentToPost = async (req, res) => {
   try {
@@ -20,158 +21,25 @@ export const commentToPost = async (req, res) => {
     }
 
     const result = await Post.aggregate([
-  { $match: { _id: new mongoose.Types.ObjectId(postId) } },
-  {
-    $lookup: {
-      from: "users",
-      localField: "user",
-      foreignField: "_id",
-      as: "user",
-    },
-  },
+      { $match: { _id: new mongoose.Types.ObjectId(postId) } },
+      {
+        $lookup: {
+          from: "users",
+          localField: "user",
+          foreignField: "_id",
+          as: "user",
+        },
+      },
 
-  { $sort: { createdAt: -1 } },
-  {
-    $addFields: {
-      user: { $arrayElemAt: ["$user", 0] },
-    },
-  },
-
-  {
-    $lookup: {
-      from: "comments",
-      let: { post_id: "$_id" },
-      pipeline: [
-        {
-          $match: {
-            $expr: {
-              $and: [{ $eq: ["$post", "$$post_id"] }],
-            },
-          },
+      { $sort: { createdAt: -1 } },
+      {
+        $addFields: {
+          user: { $arrayElemAt: ["$user", 0] },
         },
-        {
-          $match: {
-            $or: [
-              { parentComment: { $exists: false } },
-              { parentComment: null },
-            ],
-          },
-        },
-        {
-          $lookup: {
-            from: "users",
-            localField: "user",
-            foreignField: "_id",
-            as: "user",
-          },
-        },
-        {
-          $addFields: {
-            user: { $arrayElemAt: ["$user", 0] },
-          },
-        },
-        {
-          $lookup: {
-            from: "comments",
-            let: { parent_id: "$_id" },
-            pipeline: [
-              {
-                $match: {
-                  $expr: {
-                    $and: [{ $eq: ["$parentComment", "$$parent_id"] }],
-                  },
-                },
-              },
-              {
-                $lookup: {
-                  from: "users",
-                  localField: "user",
-                  foreignField: "_id",
-                  as: "user",
-                },
-              },
-              {
-                $addFields: {
-                  user: { $arrayElemAt: ["$user", 0] },
-                },
-              },
-            ],
-            as: "replies",
-          },
-        },
-      ],
-      as: "comments",
-    },
-  },
-  {
-    $lookup: {
-      from: "likes",
-      let: { post_id: "$_id" },
-      pipeline: [
-        {
-          $match: {
-            $expr: {
-              $and: [
-                { $eq: ["$targetType", "post"] },
-                { $eq: ["$targetId", "$$post_id"] },
-                { $eq: ["$isDislike", false] },
-              ],
-            },
-          },
-        },
-        {
-          $lookup: {
-            from: "users",
-            localField: "user",
-            foreignField: "_id",
-            as: "user",
-          },
-        },
-        {
-          $addFields: {
-            user: { $arrayElemAt: ["$user", 0] },
-          },
-        },
-      ],
-      as: "likers",
-    },
-  },
-  {
-    $lookup: {
-      from: "likes",
-      let: { post_id: "$_id" },
-      pipeline: [
-        {
-          $match: {
-            $expr: {
-              $and: [
-                { $eq: ["$targetType", "post"] },
-                { $eq: ["$targetId", "$$post_id"] },
-                { $eq: ["$isDislike", true] },
-              ],
-            },
-          },
-        },
-        {
-          $lookup: {
-            from: "users",
-            localField: "user",
-            foreignField: "_id",
-            as: "user",
-          },
-        },
-        {
-          $addFields: {
-            user: { $arrayElemAt: ["$user", 0] },
-          },
-        },
-      ],
-      as: "dislikers",
-    },
-  },
-  // ... rest of the pipeline
-
-]);
+      },
+      // ... rest of the pipeline
+      ...postLikesComments,
+    ]);
 
     const posts = await Post.populate(result, [
       {
