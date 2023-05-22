@@ -22,7 +22,7 @@ const app = express();
 
 // Middleware
 app.use(cors()); // Enable CORS
-app.use(express.json()); // Parse JSON request bodies
+app.use(express.json({ limit: "50mb" })); // Parse JSON request bodies
 
 // Routes
 app.get("/", (req, res) => {
@@ -34,27 +34,25 @@ app.use("/api/like", likeRoutes);
 app.use("/api/comment", commentRoutes);
 app.use("/api/auth", authRoutes);
 
-
-
 // Error handling
 app.use((err, req, res, next) => {
   console.error(err.stack, err.code);
-  if(err instanceof multer.MulterError){
-    if(err.code === 'LIMIT_FILE_SIZE'){
+  if (err instanceof multer.MulterError) {
+    if (err.code === "LIMIT_FILE_SIZE") {
       return res.status(400).json({
-        message: 'File is too large!'
-      })
+        message: "File is too large!",
+      });
     }
-    if(err.code === 'LIMIT_FILE_COUNT'){
+    if (err.code === "LIMIT_FILE_COUNT") {
       return res.status(400).json({
-        message: 'File limit reached!'
-      })
+        message: "File limit reached!",
+      });
     }
-    if(err.code === "LIMIT_UNEXPECTED_FILE"){
+    if (err.code === "LIMIT_UNEXPECTED_FILE") {
       next(err);
       return res.status(400).json({
-        message: 'Only .png, .jpg, .jpeg, .gif format allowed!'
-      })
+        message: "Only .png, .jpg, .jpeg, .gif format allowed!",
+      });
     }
   }
 
