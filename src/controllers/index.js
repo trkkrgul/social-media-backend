@@ -22,3 +22,4 @@ export { default as checkUsername } from "./checkUsername.js";
 export { default as getUserByWalletAddress } from "./getUserByWalletAddress.js";
 export { default as deletePost } from "./deletePost.js";
 export { default as getFollowingPosts } from "./getFollowingPosts.js";
+export { default as updateLastSeen } from "./updateLastSeen.js";

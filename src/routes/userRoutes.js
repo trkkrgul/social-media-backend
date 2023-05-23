@@ -4,6 +4,7 @@ import {
   followUser,
   getUserByWalletAddress,
   signup,
+  updateLastSeen,
   updateProfile,
 } from "../controllers/index.js";
 import authMiddleware from "../middleware/authValidator.js";
@@ -16,6 +17,7 @@ router.post("/createProfile", uploadMw, authMiddleware, createProfile);
 router.post("/updateProfile", uploadMw, authMiddleware, updateProfile);
 router.get("/wallet/:wallet", getUserByWalletAddress);
 router.post("/follow/:targetWallet", authMiddleware, followUser);
+router.post("/updateLastSeen", authMiddleware, updateLastSeen);
 router.get("/", (req, res) => {
   res.send("Hello World");
 });
