@@ -23,3 +23,5 @@ export { default as getUserByWalletAddress } from "./getUserByWalletAddress.js";
 export { default as deletePost } from "./deletePost.js";
 export { default as getFollowingPosts } from "./getFollowingPosts.js";
 export { default as updateLastSeen } from "./updateLastSeen.js";
+export { default as getOnlineUsers } from "./getOnlineUsers.js";
+

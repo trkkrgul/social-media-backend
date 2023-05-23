@@ -6,6 +6,7 @@ import {
   signup,
   updateLastSeen,
   updateProfile,
+  getOnlineUsers
 } from "../controllers/index.js";
 import authMiddleware from "../middleware/authValidator.js";
 import uploadMw from "../middleware/multerImageValidator.js";
@@ -18,6 +19,8 @@ router.post("/updateProfile", uploadMw, authMiddleware, updateProfile);
 router.get("/wallet/:wallet", getUserByWalletAddress);
 router.post("/follow/:targetWallet", authMiddleware, followUser);
 router.post("/updateLastSeen", authMiddleware, updateLastSeen);
+router.get("/getOnlineUsers", authMiddleware, getOnlineUsers);
+
 router.get("/", (req, res) => {
   res.send("Hello World");
 });
