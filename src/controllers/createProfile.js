@@ -66,6 +66,18 @@ async function handleUpload(files,res) {
   return images;
 }
 
+async function handleUploadSingle(file, res) {
+  try {
+    const key = await uploadToS3(file);
+    const url = await getFromS3(key);
+    return { key, type: file.mimetype.split("/")?.[0], url };
+  } catch (err) {
+    console.log(err)
+    res.status(400).json({ message: "Error while image uploading", err: err.message });
+  }
+}
+
+
 
 async function createProfile(req, res) {
   try {
@@ -76,11 +88,9 @@ async function createProfile(req, res) {
       twitterId,
       discordId,
       username,
-      cover,profile
     } = req.body;
-    console.log('cover', cover, 'profile', profile)
+    
     const { walletAddress } = req.user;
-    // const {cover, profile} = JSON.parse(controller);
 
     
     if (!walletAddress) {
@@ -112,16 +122,23 @@ async function createProfile(req, res) {
     if (discordId) user.discordId = discordId;
     user.isProfileCreated = true;
 
-    const images = await handleUpload(req.files, res); // 0-cover 1-profile
+    const { profile, cover } = req.files
+
+    if (profile && cover) {
+      const uploadProfile = handleUploadSingle(profile[0], res);
+      const uploadCover = handleUploadSingle(cover[0], res);
     
-    if(images?.length === 1) {
-      if(images?.[0]?.url && cover) user.coverPicturePath = images[0].url;
-      if(images?.[0]?.url && profile) user.profilePicturePath = images[0].url;
-    } else if (images?.length === 2) {
-      if(images?.[0]?.url) user.coverPicturePath = images[0].url;
-      if(images?.[1]?.url) user.profilePicturePath = images[1].url;
+      const [profileImage, coverImage] = await Promise.all([uploadProfile, uploadCover]);
+    
+      user.profilePicturePath = profileImage?.url;
+      user.coverPicturePath = coverImage?.url;
+    } else if (profile) {
+      const profileImage = await handleUploadSingle(profile[0], res);
+      user.profilePicturePath = profileImage?.url;
+    } else if (cover) {
+      const coverImage = await handleUploadSingle(cover[0], res);
+      user.coverPicturePath = coverImage?.url;
     }
-    
 
     const savedUser = await user.save();
     res.status(200).json(savedUser.depopulate("nonce"));

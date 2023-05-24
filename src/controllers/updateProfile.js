@@ -66,6 +66,18 @@ async function handleUpload(files,res) {
   return images;
 }
 
+async function handleUploadSingle(file, res) {
+  try {
+    const key = await uploadToS3(file);
+    const url = await getFromS3(key);
+    return { key, type: file.mimetype.split("/")?.[0], url };
+  } catch (err) {
+    console.log(err)
+    res.status(400).json({ message: "Error while image uploading", err: err.message });
+  }
+}
+
+
 async function updateProfile(req, res) {
   try {
     const {
@@ -75,9 +87,7 @@ async function updateProfile(req, res) {
       twitterId,
       discordId,
       username,
-      controller
     } = req.body;
-    const {cover, profile} = JSON.parse(controller);
 
     const { walletAddress } = req.user
 
@@ -97,18 +107,27 @@ async function updateProfile(req, res) {
     if (discordId) user.discordId = discordId;
     if (username) user.username = username;
 
-    const images = await handleUpload(req.files, res); // 0-cover 1-profile
+    const { profile, cover } = req.files
+
+    if (profile && cover) {
+      const uploadProfile = handleUploadSingle(profile[0], res);
+      const uploadCover = handleUploadSingle(cover[0], res);
     
-    if(images?.length === 1) {
-      if(images?.[0]?.url && cover) user.coverPicturePath = images[0].url;
-      if(images?.[0]?.url && profile) user.profilePicturePath = images[0].url;
-    } else if (images?.length === 2) {
-      if(images?.[0]?.url) user.coverPicturePath = images[0].url;
-      if(images?.[1]?.url) user.profilePicturePath = images[1].url;
+      const [profileImage, coverImage] = await Promise.all([uploadProfile, uploadCover]);
+    
+      user.profilePicturePath = profileImage?.url;
+      user.coverPicturePath = coverImage?.url;
+    } else if (profile) {
+      const profileImage = await handleUploadSingle(profile[0], res);
+      user.profilePicturePath = profileImage?.url;
+    } else if (cover) {
+      const coverImage = await handleUploadSingle(cover[0], res);
+      user.coverPicturePath = coverImage?.url;
     }
-    
+   
     const updatedUser = await user.save();
-    res.json(updatedUser);
+    res.send(updatedUser);
+  
   } catch (error) {
     console.error(error);
     res.status(500).json({ message: "Internal server error" });
