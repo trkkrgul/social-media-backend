@@ -1,6 +1,35 @@
+import { GetObjectCommand } from "@aws-sdk/client-s3";
+import { getSignedUrl } from "@aws-sdk/s3-request-presigner";
 import mongoose from "mongoose";
-import { Post, User, Comment, Like } from "../models/index.js";
 import postLikesComments from "../aggregates/postLikesComments.js";
+import { Post, User } from "../models/index.js";
+import { s3Client } from "./createPost.js";
+
+const BUCKET = process.env.AWS_S3_BUCKET_NAME;
+
+async function addPresignedUrls(images) {
+  await Promise.all(
+    images?.map(async (image) => {
+      if (image.key) {
+        const command = new GetObjectCommand({
+          Bucket: BUCKET,
+          Key: image.key,
+        });
+        image.url = await getSignedUrl(s3Client, command, { expiresIn: 3600 });
+        return image;
+      }
+    })
+  );
+}
+
+async function handlePostsWithUrl(posts) {
+  await Promise.all(
+    posts.map(async (post) => {
+      await addPresignedUrls(post.media);
+    })
+  );
+}
+
 const getFollowingPosts = async (req, res) => {
   try {
     const { walletAddress } = req.user;
@@ -66,6 +95,7 @@ const getFollowingPosts = async (req, res) => {
       },
     ]);
 
+    await handlePostsWithUrl(posts);
     res.status(200).json(posts);
   } catch (error) {
     console.error(error);
