@@ -1,18 +1,22 @@
 import { User } from "../models/index.js";
 
 const getOnlineUsers = async (req, res) => {
-  try {
-    const tenMinutesAgo = new Date();
-    tenMinutesAgo.setDate(tenMinutesAgo.getMinutes() - 10);
+  const tenMinutesAgo = new Date();
+  tenMinutesAgo.setDate(tenMinutesAgo.getMinutes() - 10);
 
-    const users = await User.find({ lastSeen: { $gte: tenMinutesAgo } }).select(
-      "-nonce -__v"
-    );
-    res.json(users);
-  } catch (error) {
-    console.log(error);
-    res.status(500).json({ message: "Server Error" });
-  }
+  const users = await User.find({ lastSeen: { $gte: tenMinutesAgo } })
+    .select(
+      "-nonce"
+    )
+    .then((users) => {
+      res.json(users);
+    })
+    .catch((err) => {
+      console.error(err);
+      res.status(500).send("An error occurred");
+    });
+
+  res.json(users);
 };
 
 export default getOnlineUsers;

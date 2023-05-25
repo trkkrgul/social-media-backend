@@ -4,27 +4,25 @@ import {
   followUser,
   getUserByWalletAddress,
   signup,
+  updateLastSeen,
   updateProfile,
-<<<<<<< Updated upstream
-=======
-  getOnlineUsers,
->>>>>>> Stashed changes
+  getOnlineUsers
 } from "../controllers/index.js";
 import authMiddleware from "../middleware/authValidator.js";
 import uploadMw from "../middleware/multerImageValidator.js";
+import uploadProfileMw from "../middleware/multerProfileImagesValidator.js";
+
 
 const router = express.Router();
 
 router.post("/signup", signup);
-router.post("/createProfile", uploadMw, authMiddleware, createProfile);
-router.post("/updateProfile", uploadMw, authMiddleware, updateProfile);
+router.post("/createProfile", uploadProfileMw, authMiddleware, createProfile);
+router.post("/updateProfile", uploadProfileMw, authMiddleware, updateProfile);
 router.get("/wallet/:wallet", getUserByWalletAddress);
 router.post("/follow/:targetWallet", authMiddleware, followUser);
-<<<<<<< Updated upstream
-=======
-router.get("/onlineUsers", getOnlineUsers);
+router.post("/updateLastSeen", authMiddleware, updateLastSeen);
+router.get("/getOnlineUsers", authMiddleware, getOnlineUsers);
 
->>>>>>> Stashed changes
 router.get("/", (req, res) => {
   res.send("Hello World");
 });

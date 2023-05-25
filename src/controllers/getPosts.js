@@ -3,26 +3,30 @@ import { Post, User, Comment } from "../models/index.js";
 import { s3Client } from "./createPost.js";
 import { getSignedUrl } from "@aws-sdk/s3-request-presigner";
 import { GetObjectCommand } from "@aws-sdk/client-s3";
+import postLikesComments from "../aggregates/postLikesComments.js";
 
 const BUCKET = process.env.AWS_S3_BUCKET_NAME;
 
-async function addPresignedUrls (images){
+async function addPresignedUrls(images) {
   await Promise.all(
-    images?.map( async (image) => {
-      if(image.key){
-        const command = new GetObjectCommand({ Bucket: BUCKET, Key: image.key });
-        image.url = await getSignedUrl(s3Client, command, {expiresIn: 3600})
+    images?.map(async (image) => {
+      if (image.key) {
+        const command = new GetObjectCommand({
+          Bucket: BUCKET,
+          Key: image.key,
+        });
+        image.url = await getSignedUrl(s3Client, command, { expiresIn: 3600 });
         return image;
       }
     })
-  )
+  );
 }
 
-async function getBucketFiles (res) {  
+async function getBucketFiles(res) {
   const command = new ListObjectsV2Command({
     Bucket: BUCKET,
-    Prefix: 'images/',
-    Delimiter: '/'
+    Prefix: "images/",
+    Delimiter: "/",
   });
 
   try {
@@ -31,12 +35,16 @@ async function getBucketFiles (res) {
     res.send(urls);
   } catch (err) {
     console.log("Error", err);
-    res.send(err)
+    res.send(err);
   }
 }
 
-async function handlePostsWithUrl (posts) {
-  await Promise.all(posts.map( async (post) => { await addPresignedUrls(post.media)}));
+async function handlePostsWithUrl(posts) {
+  await Promise.all(
+    posts.map(async (post) => {
+      await addPresignedUrls(post.media);
+    })
+  );
 }
 
 export const getPosts = async (req, res) => {
@@ -58,138 +66,7 @@ export const getPosts = async (req, res) => {
         },
       },
       { $sort: { createdAt: -1 } },
-      {
-        $lookup: {
-          from: "comments",
-          let: { post_id: "$_id" },
-          pipeline: [
-            {
-              $match: {
-                $expr: {
-                  $and: [{ $eq: ["$post", "$$post_id"] }],
-                },
-              },
-            },
-            {
-              $match: {
-                $or: [
-                  { parentComment: { $exists: false } },
-                  { parentComment: null },
-                ],
-              },
-            },
-            {
-              $lookup: {
-                from: "users",
-                localField: "user",
-                foreignField: "_id",
-                as: "user",
-              },
-            },
-            {
-              $addFields: {
-                user: { $arrayElemAt: ["$user", 0] },
-              },
-            },
-            {
-              $lookup: {
-                from: "comments",
-                let: { parent_id: "$_id" },
-                pipeline: [
-                  {
-                    $match: {
-                      $expr: {
-                        $and: [{ $eq: ["$parentComment", "$$parent_id"] }],
-                      },
-                    },
-                  },
-                  {
-                    $lookup: {
-                      from: "users",
-                      localField: "user",
-                      foreignField: "_id",
-                      as: "user",
-                    },
-                  },
-                  {
-                    $addFields: {
-                      user: { $arrayElemAt: ["$user", 0] },
-                    },
-                  },
-                ],
-                as: "replies",
-              },
-            },
-          ],
-          as: "comments",
-        },
-      },
-      {
-        $lookup: {
-          from: "likes",
-          let: { post_id: "$_id" },
-          pipeline: [
-            {
-              $match: {
-                $expr: {
-                  $and: [
-                    { $eq: ["$targetType", "post"] },
-                    { $eq: ["$targetId", "$$post_id"] },
-                    { $eq: ["$isDislike", false] },
-                  ],
-                },
-              },
-            },
-            {
-              $lookup: {
-                from: "users",
-                localField: "user",
-                foreignField: "_id",
-                as: "user",
-              },
-            },
-            {
-              $addFields: {
-                user: { $arrayElemAt: ["$user", 0] },
-              },
-            },
-          ],
-          as: "likers",
-        },
-      },
-      {
-        $lookup: {
-          from: "likes",
-          let: { post_id: "$_id" },
-          pipeline: [
-            {
-              $match: {
-                $expr: {
-                  $and: [
-                    { $eq: ["$targetType", "post"] },
-                    { $eq: ["$targetId", "$$post_id"] },
-                    { $eq: ["$isDislike", true] },
-                  ],
-                },
-              },
-            },
-            {
-              $lookup: {
-                from: "users",
-                localField: "user",
-                foreignField: "_id",
-                as: "user",
-              },
-            },
-            {
-              $addFields: {
-                user: { $arrayElemAt: ["$user", 0] },
-              },
-            },
-          ],
-          as: "dislikers",
-        },
-      },
+      ...postLikesComments,
     ]);
 
     const posts = await Post.populate(result, [

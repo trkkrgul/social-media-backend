@@ -18,6 +18,7 @@ const userSchema = new mongoose.Schema({
   blockedUsers: [{ type: mongoose.Schema.Types.ObjectId, ref: "User" }],
   isBlocked: { type: Boolean, default: false },
   nonce: { type: Number, default: 0 },
+  lastSeen: { type: Date, default: new Date() },
 });
 
 const User = mongoose.model("User", userSchema);
