@@ -9,7 +9,6 @@ import {
   getOnlineUsers,
 } from "../controllers/index.js";
 import authMiddleware from "../middleware/authValidator.js";
-import uploadMw from "../middleware/multerImageValidator.js";
 import uploadProfileMw from "../middleware/multerProfileImagesValidator.js";
 
 const router = express.Router();
