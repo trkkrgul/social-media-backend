@@ -1,13 +1,11 @@
 import { User } from "../models/index.js";
 
 const getOnlineUsers = async (req, res) => {
-  const tenMinutesAgo = new Date();
-  tenMinutesAgo.setDate(tenMinutesAgo.getMinutes() - 10);
-
-  const users = await User.find({ lastSeen: { $gte: tenMinutesAgo } })
-    .select(
-      "-nonce"
-    )
+  const now = new Date();
+  await User.find({
+    lastSeen: { $gte: new Date(now.getTime() - 1000 * 60000) },
+  })
+    .select("-nonce")
     .then((users) => {
       res.json(users);
     })
@@ -15,8 +13,6 @@ const getOnlineUsers = async (req, res) => {
       console.error(err);
       res.status(500).send("An error occurred");
     });
-
-  res.json(users);
 };
 
 export default getOnlineUsers;

@@ -19,7 +19,7 @@ router.post("/updateProfile", uploadProfileMw, authMiddleware, updateProfile);
 router.get("/wallet/:wallet", getUserByWalletAddress);
 router.post("/follow/:targetWallet", authMiddleware, followUser);
 router.post("/updateLastSeen", authMiddleware, updateLastSeen);
-router.get("/getOnlineUsers", getOnlineUsers);
+router.get("/onlineUsers", getOnlineUsers);
 
 router.get("/", (req, res) => {
   res.send("Hello World");
