@@ -6,12 +6,11 @@ import {
   signup,
   updateLastSeen,
   updateProfile,
-  getOnlineUsers
+  getOnlineUsers,
 } from "../controllers/index.js";
 import authMiddleware from "../middleware/authValidator.js";
 import uploadMw from "../middleware/multerImageValidator.js";
 import uploadProfileMw from "../middleware/multerProfileImagesValidator.js";
-
 
 const router = express.Router();
 
@@ -21,7 +20,7 @@ router.post("/updateProfile", uploadProfileMw, authMiddleware, updateProfile);
 router.get("/wallet/:wallet", getUserByWalletAddress);
 router.post("/follow/:targetWallet", authMiddleware, followUser);
 router.post("/updateLastSeen", authMiddleware, updateLastSeen);
-router.get("/getOnlineUsers", authMiddleware, getOnlineUsers);
+router.get("/getOnlineUsers", getOnlineUsers);
 
 router.get("/", (req, res) => {
   res.send("Hello World");
