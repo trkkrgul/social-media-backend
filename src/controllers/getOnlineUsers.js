@@ -3,7 +3,7 @@ import { User } from "../models/index.js";
 const getOnlineUsers = async (req, res) => {
   const now = new Date();
   await User.find({
-    lastSeen: { $gte: new Date(now.getTime() - 1000 * 60000) },
+    lastSeen: { $gte: new Date(now.getTime() - 10 * 60000) },
   })
     .select("-nonce")
     .then((users) => {
