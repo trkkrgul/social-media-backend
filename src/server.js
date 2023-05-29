@@ -9,6 +9,7 @@ import {
   commentRoutes,
   likeRoutes,
   authRoutes,
+  storyRoutes,
 } from "./routes/index.js";
 import connectDB from "./services/mongoDB.js";
 import multer from "multer";
@@ -33,6 +34,7 @@ app.use("/api/user", userRoutes);
 app.use("/api/like", likeRoutes);
 app.use("/api/comment", commentRoutes);
 app.use("/api/auth", authRoutes);
+app.use("/api/story", storyRoutes);
 
 // Error handling
 app.use((err, req, res, next) => {
@@ -62,6 +64,7 @@ app.use((err, req, res, next) => {
 // Start the server
 const PORT = process.env.PORT || 5001;
 app.listen(PORT, async () => {
-  await connectDB();
+  const db = await connectDB();
+
   console.log(`Server is running on port ${PORT}`);
 });

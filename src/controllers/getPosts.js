@@ -22,23 +22,6 @@ async function addPresignedUrls(images) {
   );
 }
 
-async function getBucketFiles(res) {
-  const command = new ListObjectsV2Command({
-    Bucket: BUCKET,
-    Prefix: "images/",
-    Delimiter: "/",
-  });
-
-  try {
-    const response = await s3Client.send(command);
-    const urls = await getPresignedUrls(response.Contents);
-    res.send(urls);
-  } catch (err) {
-    console.log("Error", err);
-    res.send(err);
-  }
-}
-
 async function handlePostsWithUrl(posts) {
   await Promise.all(
     posts.map(async (post) => {
