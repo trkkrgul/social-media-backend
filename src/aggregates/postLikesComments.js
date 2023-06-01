@@ -1,4 +1,5 @@
 const postLikesComments = [
+  { $limit: 100 },
   {
     $lookup: {
       from: "comments",

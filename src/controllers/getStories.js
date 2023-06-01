@@ -39,7 +39,13 @@ const getStories = async (req, res) => {
           as: "user",
         },
       },
-
+      {
+        $match: {
+          createdAt: {
+            $gte: new Date(new Date() - 24 * 60 * 60 * 1000),
+          },
+        },
+      },
       {
         $addFields: {
           user: { $arrayElemAt: ["$user", 0] },

@@ -43,6 +43,7 @@ export const getPosts = async (req, res) => {
           as: "user",
         },
       },
+
       {
         $addFields: {
           user: { $arrayElemAt: ["$user", 0] },
