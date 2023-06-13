@@ -24,5 +24,6 @@ export { default as deletePost } from "./deletePost.js";
 export { default as getFollowingPosts } from "./getFollowingPosts.js";
 export { default as updateLastSeen } from "./updateLastSeen.js";
 export { default as getOnlineUsers } from "./getOnlineUsers.js";
+export { default as getUsersTop10 } from "./getUsersTop10.js";
 export { default as getStories } from "./getStories.js";
 export { default as createStory } from "./createStory.js";
